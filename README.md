@@ -97,4 +97,4 @@ python -m pytest tests/ -v
 
 ## Learning Goal
 
-This project is an educational implementation designed to understand how GPT-style language models work internally. It is not intended to reproduce the scale or capabilities of production LLMs.
+This project is an educational implementation designed to understand how GPT-style language models work internally. It is not intended to reproduce the scale or capabilities of production LLMs
