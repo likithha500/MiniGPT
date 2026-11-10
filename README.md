@@ -89,7 +89,7 @@ python -m pytest tests/ -v
 - [x] Batching and DataLoader
 - [x] Token embeddings
 - [x] Positional embeddings
-- [ ] Causal self-attention
+- [x] Causal self-attention
 - [ ] Transformer blocks
 - [ ] GPT model
 - [ ] Training and evaluation
