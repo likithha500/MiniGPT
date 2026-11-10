@@ -88,7 +88,7 @@ python -m pytest tests/ -v
 - [x] Training and validation split
 - [x] Batching and DataLoader
 - [x] Token embeddings
-- [ ] Positional embeddings
+- [x] Positional embeddings
 - [ ] Causal self-attention
 - [ ] Transformer blocks
 - [ ] GPT model
