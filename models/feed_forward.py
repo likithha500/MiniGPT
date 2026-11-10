@@ -1,9 +1,14 @@
+
 import torch.nn as nn
 
 
 class FeedForward(nn.Module):
     def __init__(self, embedding_dim, dropout=0.1):
         super().__init__()
+
+        # Validate embedding dimension
+        if embedding_dim <= 0:
+            raise ValueError("embedding_dim must be positive")
 
         self.network = nn.Sequential(
             nn.Linear(embedding_dim, 4 * embedding_dim),
