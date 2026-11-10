@@ -87,8 +87,8 @@ python -m pytest tests/ -v
 - [x] Tiny Shakespeare preprocessing
 - [x] Training and validation split
 - [x] Batching and DataLoader
-- [ ] Token embeddings
-- [ ] Positional embeddings
+- [x] Token embeddings
+- [x] Positional embeddings
 - [ ] Causal self-attention
 - [ ] Transformer blocks
 - [ ] GPT model
