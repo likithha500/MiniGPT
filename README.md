@@ -90,7 +90,7 @@ python -m pytest tests/ -v
 - [x] Token embeddings
 - [x] Positional embeddings
 - [x] Causal self-attention
-- [ ] Transformer blocks
+- [x] Transformer blocks
 - [ ] GPT model
 - [ ] Training and evaluation
 - [ ] Text generation
