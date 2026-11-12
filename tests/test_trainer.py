@@ -209,3 +209,43 @@ def test_validation_rejects_invalid_batches():
 
     with pytest.raises(ValueError):
         trainer.evaluate(val_loader, eval_batches=0)
+
+def test_training_records_loss_history():
+    trainer = create_trainer_with_data()
+    val_loader = create_validation_loader()
+
+    trainer.train(
+        max_iterations=4,
+        log_interval=2,
+        val_loader=val_loader,
+        eval_interval=2,
+        eval_batches=2
+    )
+
+    assert len(trainer.history["iterations"]) == 2
+    assert len(trainer.history["train_loss"]) == 2
+    assert len(trainer.history["val_loss"]) == 2
+
+
+def test_training_history_records_correct_iterations():
+    trainer = create_trainer_with_data()
+    val_loader = create_validation_loader()
+
+    trainer.train(
+        max_iterations=6,
+        log_interval=2,
+        val_loader=val_loader,
+        eval_interval=3,
+        eval_batches=2
+    )
+
+    assert trainer.history["iterations"] == [3, 6]
+
+
+def test_training_without_validation():
+    trainer = create_trainer_with_data()
+
+    trainer.train(max_iterations=3, log_interval=2)
+
+    assert trainer.history["iterations"] == []
+    assert trainer.history["val_loss"] == []

@@ -26,7 +26,15 @@ class Trainer:
 
         return loss.item()
 
-    def train(self, max_iterations, log_interval=100):
+    
+    def train(
+        self,
+        max_iterations,
+        log_interval=100,
+        val_loader=None,
+        eval_interval=100,
+        eval_batches=20
+    ):
         if self.train_loader is None:
             raise ValueError("train_loader must be provided")
 
@@ -36,13 +44,25 @@ class Trainer:
         if log_interval <= 0:
             raise ValueError("log_interval must be positive")
 
+        if eval_interval <= 0:
+            raise ValueError("eval_interval must be positive")
+
+        if eval_batches <= 0:
+            raise ValueError("eval_batches must be positive")
+
         self.model.train()
 
         data_iterator = iter(self.train_loader)
         training_losses = []
 
-        for iteration in range(1, max_iterations + 1):
+        # Store training and validation history
+        self.history = {
+            "iterations": [],
+            "train_loss": [],
+            "val_loss": []
+        }
 
+        for iteration in range(1, max_iterations + 1):
             try:
                 inputs, targets = next(data_iterator)
 
@@ -60,10 +80,23 @@ class Trainer:
 
                 print(
                     f"Iteration {iteration}/{max_iterations} | "
-                    f"Average Loss: {average_loss:.4f}"
+                    f"Training Loss: {average_loss:.4f}"
                 )
 
+            if val_loader is not None and iteration % eval_interval == 0:
+                val_loss = self.evaluate(
+                    val_loader,
+                    eval_batches=eval_batches
+                )
+
+                self.history["iterations"].append(iteration)
+                self.history["train_loss"].append(average_loss if iteration % log_interval == 0 else sum(training_losses[-min(iteration, log_interval):]) / min(iteration, log_interval))
+                self.history["val_loss"].append(val_loss)
+
+                print(f"Validation Loss: {val_loss:.4f}")
+
         return training_losses
+
     
     def evaluate(self, val_loader, eval_batches=20):
         if val_loader is None:
