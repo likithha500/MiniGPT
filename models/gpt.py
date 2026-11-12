@@ -106,3 +106,34 @@ class GPTLanguageModel(nn.Module):
             )
 
         return logits, loss
+    
+    @torch.no_grad()
+    def generate(self, token_ids, max_new_tokens):
+        self.eval()
+
+        for _ in range(max_new_tokens):
+            # Keep only the most recent context
+            context = token_ids[:, -self.block_size:]
+
+            # Predict next-token probabilities
+            logits, loss = self(context)
+
+            # Get predictions for the final position
+            logits = logits[:, -1, :]
+
+            probabilities = torch.softmax(logits, dim=-1)
+
+            # Sample the next character
+            next_token = torch.multinomial(
+                probabilities,
+                num_samples=1
+            )
+
+            # Append it to the sequence
+            token_ids = torch.cat(
+                (token_ids, next_token),
+                dim=1
+            )
+
+        return token_ids
+
