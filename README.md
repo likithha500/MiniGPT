@@ -92,8 +92,10 @@ python -m pytest tests/ -v
 - [x] Causal self-attention
 - [x] Transformer blocks
 - [x] GPT model
-- [ ] Training and evaluation
+- [x] Training and evaluation
 - [ ] Text generation
+- [ ] Long-duration training
+- [ ] Training resumption
 
 ## Learning Goal
 
