@@ -1,6 +1,6 @@
-
+import pytest
 import torch
-
+from torch.utils.data import DataLoader, TensorDataset
 from models.gpt import GPTLanguageModel
 from training.trainer import Trainer
 
@@ -87,7 +87,7 @@ def test_model_enters_training_mode():
     assert model.training
 
 
-from torch.utils.data import DataLoader, TensorDataset
+
 
 
 def create_trainer_with_data():
