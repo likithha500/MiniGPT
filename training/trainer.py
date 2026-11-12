@@ -64,3 +64,39 @@ class Trainer:
                 )
 
         return training_losses
+    
+    def evaluate(self, val_loader, eval_batches=20):
+        if val_loader is None:
+            raise ValueError("val_loader must be provided")
+
+        if eval_batches <= 0:
+            raise ValueError("eval_batches must be positive")
+
+        was_training = self.model.training
+        self.model.eval()
+
+        total_loss = 0.0
+        num_batches = 0
+
+        try:
+            with torch.no_grad():
+                for batch_index, (inputs, targets) in enumerate(val_loader):
+                    if batch_index >= eval_batches:
+                        break
+
+                    inputs = inputs.to(self.device)
+                    targets = targets.to(self.device)
+
+                    logits, loss = self.model(inputs, targets)
+
+                    total_loss += loss.item()
+                    num_batches += 1
+
+            if num_batches == 0:
+                raise ValueError("val_loader contains no batches")
+
+            return total_loss / num_batches
+
+        finally:
+            self.model.train(was_training)
+

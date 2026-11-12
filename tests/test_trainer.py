@@ -157,3 +157,55 @@ def test_training_requires_dataloader():
     with pytest.raises(ValueError):
         trainer.train(max_iterations=5)
 
+
+def create_validation_loader():
+    inputs = torch.randint(0, 65, (6, 8))
+    targets = torch.randint(0, 65, (6, 8))
+
+    dataset = TensorDataset(inputs, targets)
+    return DataLoader(dataset, batch_size=2)
+
+
+def test_validation_returns_loss():
+    trainer = create_trainer_with_data()
+
+    val_loader = create_validation_loader()
+    val_loss = trainer.evaluate(val_loader)
+
+    assert isinstance(val_loss, float)
+    assert val_loss > 0
+
+
+def test_validation_does_not_update_weights():
+    trainer = create_trainer_with_data()
+    val_loader = create_validation_loader()
+
+    original_weights = (
+        trainer.model.token_embedding.embedding.weight.detach().clone()
+    )
+
+    trainer.evaluate(val_loader)
+
+    updated_weights = (
+        trainer.model.token_embedding.embedding.weight.detach()
+    )
+
+    assert torch.equal(original_weights, updated_weights)
+
+
+def test_validation_restores_training_mode():
+    trainer = create_trainer_with_data()
+    val_loader = create_validation_loader()
+
+    trainer.model.train()
+    trainer.evaluate(val_loader)
+
+    assert trainer.model.training
+
+
+def test_validation_rejects_invalid_batches():
+    trainer = create_trainer_with_data()
+    val_loader = create_validation_loader()
+
+    with pytest.raises(ValueError):
+        trainer.evaluate(val_loader, eval_batches=0)
