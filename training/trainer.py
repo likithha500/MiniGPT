@@ -27,13 +27,18 @@ class Trainer:
         return loss.item()
 
     
+    
     def train(
         self,
         max_iterations,
         log_interval=100,
         val_loader=None,
         eval_interval=100,
-        eval_batches=20
+        eval_batches=20,
+        start_iteration=0,
+        history=None,
+        checkpoint_interval=500,
+        checkpoint_callback=None
     ):
         if self.train_loader is None:
             raise ValueError("train_loader must be provided")
@@ -41,43 +46,40 @@ class Trainer:
         if max_iterations <= 0:
             raise ValueError("max_iterations must be positive")
 
-        if log_interval <= 0:
-            raise ValueError("log_interval must be positive")
+        if not 0 <= start_iteration < max_iterations:
+            raise ValueError("start_iteration must be between 0 and max_iterations - 1")
 
-        if eval_interval <= 0:
-            raise ValueError("eval_interval must be positive")
+        if log_interval <= 0 or eval_interval <= 0:
+            raise ValueError("Logging and evaluation intervals must be positive")
 
-        if eval_batches <= 0:
-            raise ValueError("eval_batches must be positive")
+        if eval_batches <= 0 or checkpoint_interval <= 0:
+            raise ValueError("Evaluation batches and checkpoint interval must be positive")
 
         self.model.train()
-
         data_iterator = iter(self.train_loader)
-        training_losses = []
 
-        # Store training and validation history
-        self.history = {
+        self.history = history or {
             "iterations": [],
             "train_loss": [],
             "val_loss": []
         }
 
-        for iteration in range(1, max_iterations + 1):
+        recent_losses = []
+
+        for iteration in range(start_iteration + 1, max_iterations + 1):
             try:
                 inputs, targets = next(data_iterator)
-
             except StopIteration:
                 data_iterator = iter(self.train_loader)
                 inputs, targets = next(data_iterator)
 
             loss = self.train_step(inputs, targets)
-            training_losses.append(loss)
+            recent_losses.append(loss)
 
             if iteration % log_interval == 0:
-                average_loss = sum(
-                    training_losses[-log_interval:]
-                ) / log_interval
-
+                average_loss = sum(recent_losses[-log_interval:]) / min(
+                    len(recent_losses), log_interval
+                )
                 print(
                     f"Iteration {iteration}/{max_iterations} | "
                     f"Training Loss: {average_loss:.4f}"
@@ -89,13 +91,26 @@ class Trainer:
                     eval_batches=eval_batches
                 )
 
+                window = recent_losses[-min(len(recent_losses), log_interval):]
+                average_loss = sum(window) / len(window)
+
                 self.history["iterations"].append(iteration)
-                self.history["train_loss"].append(average_loss if iteration % log_interval == 0 else sum(training_losses[-min(iteration, log_interval):]) / min(iteration, log_interval))
+                self.history["train_loss"].append(average_loss)
                 self.history["val_loss"].append(val_loss)
 
                 print(f"Validation Loss: {val_loss:.4f}")
 
-        return training_losses
+            if (
+                checkpoint_callback is not None
+                and iteration % checkpoint_interval == 0
+            ):
+                checkpoint_callback(
+                    iteration,
+                    self.history
+                )
+
+        return recent_losses
+
 
     
     def evaluate(self, val_loader, eval_batches=20):

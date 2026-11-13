@@ -249,3 +249,54 @@ def test_training_without_validation():
 
     assert trainer.history["iterations"] == []
     assert trainer.history["val_loss"] == []
+
+
+def test_training_calls_checkpoint_callback():
+    trainer = create_trainer_with_data()
+    saved_iterations = []
+
+    def save_callback(iteration, history):
+        saved_iterations.append(iteration)
+
+    trainer.train(
+        max_iterations=6,
+        log_interval=2,
+        checkpoint_interval=2,
+        checkpoint_callback=save_callback
+    )
+
+    assert saved_iterations == [2, 4, 6]
+
+
+def test_training_can_resume_from_iteration():
+    trainer = create_trainer_with_data()
+
+    losses = trainer.train(
+        max_iterations=6,
+        start_iteration=3,
+        log_interval=2
+    )
+
+    assert len(losses) == 3
+
+
+def test_training_preserves_previous_history():
+    trainer = create_trainer_with_data()
+
+    previous_history = {
+        "iterations": [2],
+        "train_loss": [3.5],
+        "val_loss": [3.7]
+    }
+
+    trainer.train(
+        max_iterations=4,
+        start_iteration=2,
+        history=previous_history,
+        log_interval=2,
+        val_loader=create_validation_loader(),
+        eval_interval=2
+    )
+
+    assert trainer.history["iterations"][0] == 2
+    assert len(trainer.history["iterations"]) == 2

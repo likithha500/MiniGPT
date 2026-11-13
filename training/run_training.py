@@ -9,39 +9,42 @@ from models.gpt import GPTLanguageModel
 from training.config import GPTConfig
 from training.data_loader import create_dataloaders
 from training.trainer import Trainer
-from training.checkpoint import save_checkpoint
+from training.checkpoint import save_checkpoint, load_checkpoint
 
 
-def run_training(max_iterations=100):
-    # Find the project root directory
+def run_training(
+    max_iterations=5000,
+    checkpoint_dir=None,
+    resume=True
+):
     project_root = Path(__file__).resolve().parents[1]
 
-    # Select training device
+    if checkpoint_dir is None:
+        checkpoint_dir = project_root / "checkpoints"
+
+    checkpoint_dir = Path(checkpoint_dir)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    checkpoint_path = checkpoint_dir / "minigpt_checkpoint.pt"
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Training device: {device}")
 
-    # Load and preprocess Tiny Shakespeare
-    dataset_path = project_root / "data" / "raw" / "tinyshakespeare.txt"
-    text = load_text(dataset_path)
+    text = load_text(
+        project_root / "data" / "raw" / "tinyshakespeare.txt"
+    )
 
     tokenizer, train_data, val_data = prepare_data(text)
 
-    # Create configuration
     config = GPTConfig(vocab_size=tokenizer.vocab_size)
 
-    print(f"Vocabulary size: {config.vocab_size}")
-    print(f"Training tokens: {len(train_data)}")
-    print(f"Validation tokens: {len(val_data)}")
-
-    # Create DataLoaders
     train_loader, val_loader = create_dataloaders(
-        train_data=train_data,
-        val_data=val_data,
-        block_size=config.block_size,
-        batch_size=config.batch_size
+        train_data,
+        val_data,
+        config.block_size,
+        config.batch_size
     )
 
-    # Initialize GPT
     model = GPTLanguageModel(
         vocab_size=config.vocab_size,
         embedding_dim=config.embedding_dim,
@@ -51,31 +54,66 @@ def run_training(max_iterations=100):
         dropout=config.dropout
     )
 
-    # Initialize optimizer
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=config.learning_rate
     )
 
-    # Initialize trainer
+    start_iteration = 0
+    history = None
+
+    if resume and checkpoint_path.exists():
+        metadata = load_checkpoint(
+            model,
+            optimizer,
+            checkpoint_path,
+            device=device
+        )
+
+        start_iteration = metadata["iteration"]
+        history = metadata["history"]
+
+        if metadata["config"] != asdict(config):
+            raise ValueError(
+                "Saved checkpoint configuration does not match current configuration"
+            )
+
+        print(f"Resuming from iteration {start_iteration}")
+
     trainer = Trainer(
-        model=model,
-        train_loader=train_loader,
-        optimizer=optimizer,
+        model,
+        train_loader,
+        optimizer,
         device=device
     )
 
-    # Train and validate
-    training_losses = trainer.train(
-        max_iterations=max_iterations,
-        log_interval=10,
-        val_loader=val_loader,
-        eval_interval=50,
-        eval_batches=config.eval_batches
-    )
+    def checkpoint_callback(iteration, current_history):
+        save_checkpoint(
+            model=model,
+            optimizer=optimizer,
+            iteration=iteration,
+            history=current_history,
+            file_path=checkpoint_path,
+            config=asdict(config)
+        )
 
-    # Save checkpoint
-    checkpoint_path = project_root / "checkpoints" / "minigpt_checkpoint.pt"
+        print(f"Checkpoint saved at iteration {iteration}")
+
+    if start_iteration >= max_iterations:
+        print("The checkpoint has already reached the target iteration.")
+        return model, trainer, tokenizer
+
+    trainer.train(
+        max_iterations=max_iterations,
+        log_interval=100,
+        val_loader=val_loader,
+        eval_interval=500,
+        eval_batches=config.eval_batches,
+        start_iteration=start_iteration,
+        history=history,
+        checkpoint_interval=500,
+        checkpoint_callback=checkpoint_callback
+    )
 
     save_checkpoint(
         model=model,
@@ -86,12 +124,10 @@ def run_training(max_iterations=100):
         config=asdict(config)
     )
 
-    print(f"\nTraining completed!")
-    print(f"Final training loss: {training_losses[-1]:.4f}")
-    print(f"Checkpoint saved to: {checkpoint_path}")
+    print(f"Training completed. Final checkpoint: {checkpoint_path}")
 
     return model, trainer, tokenizer
 
 
 if __name__ == "__main__":
-    run_training(max_iterations=100)
+    run_training(max_iterations=5000)
