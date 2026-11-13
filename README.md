@@ -93,7 +93,7 @@ python -m pytest tests/ -v
 - [x] Transformer blocks
 - [x] GPT model
 - [x] Training and evaluation
-- [ ] Text generation
+- [x] Text generation
 - [ ] Long-duration training
 - [ ] Training resumption
 
