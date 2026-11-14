@@ -69,3 +69,36 @@ generated_text = tokenizer.decode(
 
 print("\nGenerated Shakespeare-style text:\n")
 print(generated_text)
+
+# Generate with balanced sampling
+generated_1 = model.generate(
+    prompt_ids.clone(),
+    max_new_tokens=500,
+    temperature=0.8,
+    top_k=10
+)
+
+# Generate with more predictable sampling
+generated_2 = model.generate(
+    prompt_ids.clone(),
+    max_new_tokens=500,
+    temperature=0.6,
+    top_k=5
+)
+
+# Generate with more diversity
+generated_3 = model.generate(
+    prompt_ids.clone(),
+    max_new_tokens=500,
+    temperature=1.0,
+    top_k=20
+)
+
+print("\n--- Balanced ---\n")
+print(tokenizer.decode(generated_1[0].tolist()))
+
+print("\n--- Predictable ---\n")
+print(tokenizer.decode(generated_2[0].tolist()))
+
+print("\n--- Diverse ---\n")
+print(tokenizer.decode(generated_3[0].tolist()))

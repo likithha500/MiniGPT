@@ -107,33 +107,60 @@ class GPTLanguageModel(nn.Module):
 
         return logits, loss
     
+    
+    
     @torch.no_grad()
-    def generate(self, token_ids, max_new_tokens):
+    def generate(
+        self,
+        token_ids,
+        max_new_tokens,
+        temperature=1.0,
+        top_k=None
+    ):
+        if temperature <= 0:
+            raise ValueError("temperature must be positive")
+
+        if top_k is not None:
+            if top_k <= 0:
+                raise ValueError("top_k must be positive")
+
+            if top_k > self.language_model_head.out_features:
+                raise ValueError("top_k cannot exceed vocabulary size")
+
         self.eval()
 
         for _ in range(max_new_tokens):
-            # Keep only the most recent context
             context = token_ids[:, -self.block_size:]
 
-            # Predict next-token probabilities
-            logits, loss = self(context)
-
-            # Get predictions for the final position
+            logits, _ = self(context)
             logits = logits[:, -1, :]
 
+            # Apply temperature
+            logits = logits / temperature
+
+            # Keep only the top-k most likely tokens
+            if top_k is not None:
+                values, _ = torch.topk(logits, top_k)
+
+                threshold = values[:, -1].unsqueeze(-1)
+
+                logits = logits.masked_fill(
+                    logits < threshold,
+                    float("-inf")
+                )
+
+            # Convert logits into probabilities
             probabilities = torch.softmax(logits, dim=-1)
 
-            # Sample the next character
+            # Sample the next token
             next_token = torch.multinomial(
                 probabilities,
                 num_samples=1
             )
 
-            # Append it to the sequence
             token_ids = torch.cat(
                 (token_ids, next_token),
                 dim=1
             )
 
         return token_ids
-
