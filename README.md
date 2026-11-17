@@ -94,8 +94,8 @@ python -m pytest tests/ -v
 - [x] GPT model
 - [x] Training and evaluation
 - [x] Text generation
-- [ ] Long-duration training
-- [ ] Training resumption
+- [x] Long-duration training
+- [x] Training resumption
 
 ## Learning Goal
 
