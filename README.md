@@ -1,102 +1,151 @@
-# MiniGPT — From Scratch
+# MiniGPT — GPT Language Model from Scratch
 
-A decoder-only Transformer language model implemented from scratch using Python and PyTorch.
+A decoder-only Transformer language model built using PyTorch. MiniGPT implements the core components of GPT architecture and generates Shakespeare-style text using the Tiny Shakespeare dataset.
 
-The objective of this project is to understand the internal architecture of GPT-style language models by building, training, evaluating and generating text with a small language model.
+## Architecture
 
-## Project Objectives
-
-- Understand tokenization and vocabulary creation.
-- Implement next-token prediction.
-- Build token embeddings and positional embeddings.
-- Implement causal self-attention.
-- Develop Transformer blocks.
-- Train a decoder-only language model.
-- Evaluate model performance.
-- Generate text using the trained model.
+```text
+Input Text
+    |
+    v
+Character Tokenizer
+    |
+    v
+Token IDs
+    |
+    v
+Token Embeddings
+    +
+Positional Embeddings
+    |
+    v
+Transformer Blocks
+    |
+    +-----------------------------+
+    | Layer Normalization         |
+    | Causal Self-Attention       |
+    | Residual Connection         |
+    | Layer Normalization         |
+    | Feed-Forward Network        |
+    | Residual Connection         |
+    +-----------------------------+
+    |
+    v
+Final Layer Norm
+    |
+    v
+Linear Head
+    |
+    v
+Next-Character Logits
+    |
+    v
+Probability Sampling
+    |
+    v
+Generated Text
+```
 
 ## Tech Stack
 
-- **Language:** Python 3.13
-- **Deep Learning:** PyTorch
-- **Numerical Computing:** NumPy
-- **Testing:** Pytest
-- **Visualization:** Matplotlib
+- Python
+- PyTorch
+- NumPy
+- Matplotlib
+- Pytest
+- Google Colab
 
-## Dataset
+## Model Configuration
 
-This project uses the Tiny Shakespeare dataset for character-level language modeling experiments.
+| Parameter | Value |
+|---|---:|
+| Dataset | Tiny Shakespeare |
+| Vocabulary size | 65 |
+| Embedding dimension | 64 |
+| Attention heads | 4 |
+| Transformer layers | 4 |
+| Context length | 128 |
+| Dropout | 0.1 |
+| Optimizer | AdamW |
+| Learning rate | 0.0003 |
 
-- Total characters: 1,115,394
-- Vocabulary size: 65 unique characters
-- Training split: 90%
-- Validation split: 10%
+## Training Results
 
-## Project Architecture
+| Metric | Result |
+|---|---:|
+| Training iterations | 5,000 |
+| Final training loss | 2.0037 |
+| Final validation loss | 2.0276 |
+| Automated tests | 82 passed |
+
+### Training and Validation Loss
+
+The graph illustrates the model's learning progress during the initial 5,000-iteration experiment.
+
+![MiniGPT Training and Validation Loss](docs/loss_curve.png)
+
+## Text Generation
+
+Supports autoregressive text generation using:
+
+- Temperature sampling
+- Top-K sampling
+
+| Configuration | Temperature | Top-K |
+|---|---:|---:|
+| Balanced | 0.8 | 10 |
+| Predictable | 0.6 | 5 |
+| Diverse | 1.0 | 20 |
+
+## Project Structure
 
 ```text
 MiniGPT/
 ├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── preprocess.py
 ├── tokenizer/
-│   └── tokenizer.py
+├── models/
 ├── training/
-│   ├── dataset.py
-│   └── data_loader.py
 ├── tests/
-├── configs/
-├── model/
-├── evaluation/
-└── generation/
+├── checkpoints/
+├── generate_text.py
+├── requirements.txt
+└── README.md
 ```
 
-## Getting Started
+## Run the Project
 
-Clone the repository:
+Clone the repository and install dependencies:
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone https://github.com/likithha500/MiniGPT.git
 cd MiniGPT
+pip install -r requirements.txt
 ```
 
-Create and activate a virtual environment:
+Download Tiny Shakespeare into `data/raw/tinyshakespeare.txt`.
+
+Train the model:
 
 ```bash
-py -3.13 -m venv .venv
+python -m training.run_training
 ```
 
-Install dependencies:
+Generate text:
 
 ```bash
-python -m pip install -r requirements.txt
+python generate_text.py
 ```
 
 Run tests:
 
 ```bash
-python -m pytest tests/ -v
+python -m pytest -v
 ```
 
-## Development Progress
+## Objective
 
-- [x] Repository and environment setup
-- [x] Character-level tokenizer
-- [x] Next-token dataset
-- [x] Tiny Shakespeare preprocessing
-- [x] Training and validation split
-- [x] Batching and DataLoader
-- [x] Token embeddings
-- [x] Positional embeddings
-- [x] Causal self-attention
-- [x] Transformer blocks
-- [x] GPT model
-- [x] Training and evaluation
-- [x] Text generation
-- [x] Long-duration training
-- [x] Training resumption
+MiniGPT is an educational implementation focused on understanding GPT-style language models, covering tokenization, embeddings, attention, Transformer architecture, training, evaluation and autoregressive text generation.
 
-## Learning Goal
+**Built with PyTorch for educational purposes.**
 
-This project is an educational implementation designed to understand how GPT-style language models work internally. It is not intended to reproduce the scale or capabilities of production LLMs
+[GitHub Repository](https://github.com/likithha500/MiniGPT)
