@@ -80,7 +80,7 @@ Generated Text
 
 ### Training and Validation Loss
 
-The graph illustrates the model's learning progress during the initial 5,000-iteration experiment.
+The graph illustrates the model's learning progress during the initial 10,000-iteration experiment.
 
 ![MiniGPT Training and Validation Loss](docs/loss_curve.png)
 
